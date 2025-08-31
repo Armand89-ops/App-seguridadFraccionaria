@@ -283,9 +283,9 @@ const TablaAnuncios = ({ navigation, route }) => {
                   onValueChange={value => setDatosAnuncio({ ...DatosAnuncio, tipo: value })}
                   value={DatosAnuncio.tipo}
                 >
-                <View style={{ alignItems: 'center' }}>
-                  <RadioButton.Item color='#007bffff' label="Edificio" value="Edificio"  />
-                  <RadioButton.Item color='#007bffff' label="General" value="General"  />
+                <View style={{ alignItems: 'flex-start', width: '100%' }}>
+                  <RadioButton.Item position='leading' color='#007bffff' label="Edificio" value="Edificio"  />
+                  <RadioButton.Item position='leading' color='#007bffff' label="General" value="General"  />
                 </View>
                  </RadioButton.Group>
               </View>
@@ -311,9 +311,9 @@ const TablaAnuncios = ({ navigation, route }) => {
                   onValueChange={value => setDatosAnuncio({ ...DatosAnuncio, programado: value === 'Programada' })}
                   value={DatosAnuncio.programado ? 'Programada' : 'Inmediata'}
                 >
-                <View style={{ alignItems: 'center' }}>
-                  <RadioButton.Item color='#007bffff' label="Inmediata" value="Inmediata"  />
-                  <RadioButton.Item color='#007bffff' label="Programada" value="Programada"  />
+                <View style={{ alignItems: 'flex-start', width: '100%'}}>
+                  <RadioButton.Item position='leading' color='#007bffff' label="Inmediata" value="Inmediata"  />
+                  <RadioButton.Item position='leading' color='#007bffff' label="Programada" value="Programada"  />
                 </View>
                  </RadioButton.Group>
               </View>
@@ -371,9 +371,9 @@ const TablaAnuncios = ({ navigation, route }) => {
                   onValueChange={value => setDatosAnuncio({ ...DatosAnuncio, tipo: value })}
                   value={DatosAnuncio.tipo}
                 >
-                <View style={{ alignItems: 'center' }}>
-                  <RadioButton.Item color='#007bffff' label="Edificio" value="Edificio"  />
-                  <RadioButton.Item color='#007bffff' label="General" value="General"  />
+                <View style={{ alignItems: 'flex-start', width: '100%' }}>
+                  <RadioButton.Item position='leading' color='#007bffff' label="Edificio" value="Edificio"  />
+                  <RadioButton.Item position='leading' color='#007bffff' label="General" value="General"  />
                 </View>
                  </RadioButton.Group>
               </View>
@@ -402,9 +402,9 @@ const TablaAnuncios = ({ navigation, route }) => {
                   onValueChange={value => setDatosAnuncio({ ...DatosAnuncio, programado: value === 'Programada' })}
                   value={DatosAnuncio.programado ? 'Programada' : 'Inmediata'}
                 >
-                <View style={{ alignItems: 'center' }}>
-                  <RadioButton.Item color='#007bffff' label="Inmediata" value="Inmediata"  />
-                  <RadioButton.Item color='#007bffff' label="Programada" value="Programada"  />
+                <View style={{ alignItems: 'flex-start', width: '100%' }}>
+                  <RadioButton.Item position='leading' color='#007bffff' label="Inmediata" value="Inmediata"  />
+                  <RadioButton.Item position='leading' color='#007bffff' label="Programada" value="Programada"  />
                 </View>
                  </RadioButton.Group>
               </View>

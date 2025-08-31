@@ -66,9 +66,17 @@ const MenuVigilante = ({ navigation, idVigilante, titulo = "Panel Vigilante" }) 
                 icon="bullhorn"
                 onPress={() => navigateToScreen('ConsultarPagosVigilante')}
               />
+
+              
+            <Drawer.Item
+              label="Reglamento de la Unidad"
+              icon="book"
+              onPress={() => navigateToScreen('ReglamentoUnidadVigilante')}
+            />
               
             </Drawer.Section>
             
+
             <Drawer.Section title="Sesión">
               <Drawer.Item
                 label="Cerrar Sesión"
@@ -76,8 +84,10 @@ const MenuVigilante = ({ navigation, idVigilante, titulo = "Panel Vigilante" }) 
                 onPress={cerrarSesion}
               />
             </Drawer.Section>
+
+
           </View>
-          
+
           {/* Overlay para cerrar el menú al tocar fuera */}
           <View 
             style={styles.overlayBackground} 

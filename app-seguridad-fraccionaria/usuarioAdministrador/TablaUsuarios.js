@@ -65,7 +65,7 @@ const TablaUsuarios = ({ navigation, route }) => {
       const data = new FormData();
       data.append('imagen', {
         uri: imagenSeleccionada.uri,
-        type: imagenSeleccionada.mimeType || 'image/jpeg',
+        type: imagenSeleccionada.Type || 'image/jpeg',
         name: imagenSeleccionada.fileName || 'ine.jpg',
       });
       const response = await fetch('http://192.168.0.103:3000/subirIne', {
@@ -268,10 +268,15 @@ const TablaUsuarios = ({ navigation, route }) => {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setImagenSeleccionada(result.assets[0]);
+        const asset = result.assets[0];
+        setImagenSeleccionada({
+          uri: asset.uri,
+          type: asset.type || 'image/jpeg',
+          fileName: asset.fileName || 'ine.jpg'
+        });
         setDatosUsuarios(prev => ({
           ...prev,
-          Ine: result.assets[0].uri
+          Ine: asset.uri
         }));
       } else {
         Alert.alert('No seleccionaste ninguna imagen');
@@ -386,7 +391,9 @@ const TablaUsuarios = ({ navigation, route }) => {
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' }}>
           <Image source={{ uri: imagenGrande }} style={{ width: 300, height: 400, resizeMode: 'contain' }} />
-          <Button title="Cerrar" onPress={() => setImagenGrande(null)} color="#007bffff" />
+          <Button style={{ backgroundColor: '#f12727ff' }} icon="close" mode="contained" onPress={() => setImagenGrande(null)} color="#007bffff">
+            Cerrar
+          </Button>
         </View>
       </Modal>
 

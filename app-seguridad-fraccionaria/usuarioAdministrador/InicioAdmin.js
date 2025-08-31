@@ -9,6 +9,7 @@ const InicioAdmin = ({ navigation, route }) => {
   const [modalAgregarVisible, setModalAgregarVisible] = useState(false);
   const [DatosAnuncio, setDatosAnuncio] = useState({
     contenido: '',
+    idAdmin: idAdmin,
   });
 
   const FuncionAgregarAnuncio = async () => {
@@ -20,7 +21,7 @@ const InicioAdmin = ({ navigation, route }) => {
           ...DatosAnuncio,
           fechaEnvio: new Date().toISOString(),
           titulo: 'Noticia urgente',
-          tipo: 'general',
+          tipo: 'General',
           idAdmin: idAdmin,
         };
         try {

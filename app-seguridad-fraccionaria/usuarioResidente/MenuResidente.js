@@ -60,7 +60,7 @@ const MenuResidente = ({ navigation, idResidente, titulo = "Panel Residente" }) 
               />
               <Drawer.Item
                 label="Historial de Pagos"
-                icon="bullhorn"
+                icon="history"
                 onPress={() => navigateToScreen('HistorialPagos')}
               />
               <Drawer.Item

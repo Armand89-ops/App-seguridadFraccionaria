@@ -1,9 +1,11 @@
-import React, { useState } from 'react';                          
+import React, { useEffect, useState } from 'react';                          
 import { StyleSheet, Text, View, SafeAreaView, StatusBar, Platform } from 'react-native';         
 import { NavigationContainer } from '@react-navigation/native';   
 import { createNativeStackNavigator } from '@react-navigation/native-stack'; 
 import { Provider as PaperProvider, TextInput, Button } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 
 import inicioUsuarioAdmin from './usuarioAdministrador/InicioAdmin';
 import inicioUsuarioResidente from './usuarioResidente/InicioResidente';
@@ -26,6 +28,7 @@ import ReglamentoUnidadResidente from './usuarioResidente/ReglamentoUnidad';
 import AlertasVigilante from './usuarioVigilante/Alertas';
 import ChatsVigilante from './usuarioVigilante/Chats';
 import ConsultarPagosVigilante from './usuarioVigilante/ConsultarPagos';
+import ReglamentoUnidadVigilante from './usuarioVigilante/ReglamentoUnidad';
 
 //Improtacion para recuperar contraseña
 import RecuperarContrasena from './RecuperarContraseña';
@@ -117,9 +120,38 @@ return (
   );
 }
 
-
-
 export default function App() {
+  useEffect(() => {
+    async function registerForPushNotificationsAsync() {
+      let token;
+      if (Device.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+          alert('¡No se pudo obtener el token para notificaciones push!');
+          return;
+        }
+        token = (await Notifications.getExpoPushTokenAsync()).data;
+        console.log('Expo Push Token:', token);
+        // Guarda este token en tu backend si quieres enviar notificaciones desde el servidor
+      } else {
+        alert('Debes usar un dispositivo físico para las notificaciones push');
+      }
+    }
+    registerForPushNotificationsAsync();
+
+    // Listener para recibir notificaciones en primer plano
+    const subscription = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notificación recibida:', notification);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
     <PaperProvider>
@@ -216,6 +248,11 @@ export default function App() {
           <Stack.Screen 
             name="RecuperarContrasena" 
             component={RecuperarContrasena}
+          />
+
+          <Stack.Screen 
+            name="ReglamentoUnidadVigilante" 
+            component={ReglamentoUnidadVigilante}
           />
         </Stack.Navigator>
       </NavigationContainer>

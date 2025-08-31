@@ -159,7 +159,7 @@ const ReglamentoUnidad = ({ navigation, route }) => {
       <View style={styles.content}>
         <FAB
           icon="playlist-plus"
-          color="#ffffffff"
+          color="#000000ff"
           style={styles.fab}
           onPress={() => {
             setModalAgregarVisible(true);
@@ -176,7 +176,7 @@ const ReglamentoUnidad = ({ navigation, route }) => {
         {/* Modal para ver la regla */}
         <Portal>
           <Modal visible={modalVerVisible} onDismiss={() => setModalVerVisible(false)}>
-            <View style={styles.modalView}>
+            <View style={styles.detalleModalView}>
               <Text style={styles.modalTitle}>Detalles de la regla</Text>
               <Text style={styles.dataCellValue}>{detalleRegla?.regla}</Text>
               <Button
@@ -268,7 +268,7 @@ const ReglamentoUnidad = ({ navigation, route }) => {
           <Modal
             visible={modalEditarVisible}
             onDismiss={() => setModalEditarVisible(false)}
-            contentContainerStyle={styles.modalView}
+            contentContainerStyle={styles.EditarReglaModalView}
           >
             <Text style={styles.modalTitle}>Editar regla</Text>
             <TextInput
@@ -286,6 +286,7 @@ const ReglamentoUnidad = ({ navigation, route }) => {
                 mode="contained"
                 onPress={() => setModalEditarVisible(false)}
                 labelStyle={{ color: '#fff' }}
+                icon="close"
               >
                 Cancelar
               </Button>
@@ -294,6 +295,7 @@ const ReglamentoUnidad = ({ navigation, route }) => {
                 mode="contained"
                 onPress={EditarRegla}
                 labelStyle={{ color: '#fff' }}
+                icon="check"
               >
                 Guardar
               </Button>
@@ -308,18 +310,18 @@ const ReglamentoUnidad = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   containerSafeArea: { flex: 1, backgroundColor: '#f5f5f5' },
   content: { flex: 1, padding: 20 },
-  modalView: { margin: 30, backgroundColor: 'white', borderRadius: 20, padding: 20, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5,height: 390 },
   modalTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 10, marginTop: -10 },
   input: {
   borderColor: '#ccc',
   borderWidth: 1,
   borderRadius: 8,
-  padding: -100,
+  padding: 1,
+
   marginBottom: 180,
   textAlignVertical: 'top',
   fontSize: 16,
   backgroundColor: '#f7fafd',
-  height: 100
+  height: 50,
   },
   modalBtns: {
     flexDirection: 'row',
@@ -392,6 +394,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#21f3f3ff',
     elevation: 8,
     zIndex: 999,
+  },
+  detalleModalView: {
+  backgroundColor: '#fff',
+  borderRadius: 18,
+  padding: 30,
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.18,
+  shadowRadius: 6,
+  elevation: 8,
+  width: 350,     
+  minHeight: 150, 
+  maxHeight: 170, 
+  alignSelf: 'center',
+},
+EditarReglaModalView: {
+  backgroundColor: '#fff',
+  borderRadius: 18,
+  padding: 20,
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.18,
+  shadowRadius: 6,
+  elevation: 20,
+  width: 350,     
+  height: 400,
+  maxHeight: 400, 
+  alignSelf: 'center',
+},
+  modalView: { margin: 30, backgroundColor: 'white', 
+    backgroundColor: '#fff',
+  borderRadius: 18,
+  padding: 20,
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.18,
+  shadowRadius: 6,
+  elevation: 20,
+  width: 350,     
+  height: 400,
+  maxHeight: 400, 
+  alignSelf: 'center',
   },
 });
 

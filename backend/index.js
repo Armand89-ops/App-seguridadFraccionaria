@@ -12,6 +12,16 @@ const path = require('path');
 const fs = require('fs');
 const url = require('url');
 
+//aqui el socket para comunicar
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+  }
+});
+
 app.use(cors());                         
 app.use(express.json());               
 
@@ -50,7 +60,7 @@ async function conectarDB() {
 }
 
 conectarDB().then(() => {
-  app.listen(3000, () => {
+  server.listen(3000, () => {
     console.log('Servidor corriendo en puerto 3000');
     console.log('Base de datos conectada y lista');
   });
@@ -188,6 +198,33 @@ app.get('/verAnuncios', async (req, res) => {
     res.status(500).send('Error obteniendo anuncios');
   }
 }); 
+
+app.get('/verAnunciosResidente/:nombreEdificio', async (req, res) => {
+  const { nombreEdificio } = req.params;
+  try {
+    const anuncios = await coleccionAnuncios.find({
+      $or: [
+        { tipo: 'General' },
+        { tipo: 'Edificio', nombreEdificio }
+      ]
+    }).toArray();
+    res.json(anuncios);
+  } catch (error) {
+    console.error('Error obteniendo anuncios para residente:', error);
+    res.status(500).send('Error obteniendo anuncios para residente');
+  }
+});
+
+
+app.get('/verResidente/:idResidente', async (req, res) => {
+  const { idResidente } = req.params;
+  try {
+    const residente = await coleccionUsuarios.findOne({ _id: new ObjectId(idResidente) });
+    res.json(residente);
+  } catch (error) {
+    res.status(500).send('Error obteniendo residente');
+  }
+});
 
 app.post('/agregarAnuncio', async (req, res) => {
   const { titulo, contenido, tipo, nombreEdificio, fechaEnvio, programado, fechaProgramada, idAdmin } = req.body;
@@ -401,6 +438,15 @@ app.get('/verPagos', async (req, res) => {
   }
 });
 
+app.get('/verPagosResidente/:idResidente', async (req, res) => {
+  const { idResidente } = req.params;
+  try {
+    const pagos = await coleccionPagos.find({ idUsuario: new ObjectId(idResidente) }).toArray();
+    res.json(pagos);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error obteniendo pagos del residente' });
+  }
+});
 
 //Ruta pra recuperar contraseña
 
@@ -532,6 +578,30 @@ app.post('/agregarMensaje', async (req, res) => {
       fechaEnvio: new Date()
     };
     const resultado = await coleccionMensajes.insertOne(nuevoMensaje);
+
+    // Busca el mensaje con nombre de usuario para emitirlo como que en el fetch
+    const mensajeEmitir = await coleccionMensajes.aggregate([
+      { $match: { _id: resultado.insertedId } },
+      {
+        $lookup: {
+          from: 'DatosUsuarios',
+          localField: 'idUsuario',
+          foreignField: '_id',
+          as: 'usuario'
+        }
+      },
+      {
+        $addFields: {
+          nombreUsuario: { $arrayElemAt: ['$usuario.NombreCompleto', 0] }
+        }
+      },
+      { $project: { usuario: 0 } }
+    ]).toArray();
+
+    mensajeEmitir[0].idChat = mensajeEmitir[0].idChat.toString();
+    // Emitir el mensaje a los clientes conectados
+    io.emit('nuevoMensaje', mensajeEmitir[0]);
+
     res.status(201).json({ _id: resultado.insertedId, ...nuevoMensaje });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error agregando mensaje' });
@@ -567,7 +637,7 @@ app.get('/verMensajes/:idChat', async (req, res) => {
       { $match: { idChat: new ObjectId(req.params.idChat) } },
       {
         $lookup: {
-          from: 'DatosUsuarios', 
+          from: 'DatosUsuarios', // Asegúrate que este es el nombre correcto de tu colección de usuarios
           localField: 'idUsuario',
           foreignField: '_id',
           as: 'usuario'
@@ -615,3 +685,15 @@ app.get('/verChatsVigilante/:idVigilante', async (req, res) => {
     res.status(500).json({ mensaje: 'Error obteniendo chats del vigilante' });
   }
 });
+
+
+//conexion y desconexion de sockets
+io.on('connection', (socket) => {
+  console.log('Nuevo cliente conectado:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id);
+  });
+
+});
+ 

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MenuResidente from './MenuResidente';
+import MenuVigilante from './MenuVigilante';
 import { DataTable } from 'react-native-paper';
 
-const ReglamentoUnidadResidente = ({ navigation, route }) => {
-  const { idResidente } = route.params;
+const ReglamentoUnidadVigilante = ({ navigation, route }) => {
+  const { idVigilante } = route.params;
   const [reglas, setReglas] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +21,7 @@ const ReglamentoUnidadResidente = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <MenuResidente navigation={navigation} idResidente={idResidente} titulo="Reglamento de la unidad" />
+      <MenuVigilante navigation={navigation} idVigilante={idVigilante} titulo="Reglamento de la unidad" />
 
       <View style={styles.content}>
         <Text style={styles.screenTitle}>Reglamento de la unidad</Text>
@@ -82,4 +82,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ReglamentoUnidadResidente;
+export default ReglamentoUnidadVigilante;

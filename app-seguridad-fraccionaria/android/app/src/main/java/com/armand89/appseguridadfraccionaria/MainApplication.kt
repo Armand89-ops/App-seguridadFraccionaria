@@ -1,4 +1,4 @@
-package com.appseguridadfraccionaria
+package com.armand89.appseguridadfraccionaria
 
 import android.app.Application
 import android.content.res.Configuration

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Button, KeyboardAvoidingView } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Button, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MenuVigilante from './MenuVigilante';
+import socket from '../socket'; 
 
 const Chats = ({ navigation, route }) => {
   const { idVigilante } = route.params;
@@ -10,6 +11,7 @@ const Chats = ({ navigation, route }) => {
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMensaje, setNuevoMensaje] = useState('');
   const [usuarios, setUsuarios] = useState([]);
+  const flatListRef = useRef(null);
 
   // Cargar chats donde participa el vigilante
   useEffect(() => {
@@ -55,55 +57,92 @@ const Chats = ({ navigation, route }) => {
       })
     });
     setNuevoMensaje('');
-    // Recarga mensajes
-    fetch(`http://192.168.0.103:3000/verMensajes/${chatSeleccionado._id}`)
-      .then(res => res.json())
-      .then(data => setMensajes(data));
+    
   };
 
+  // WebSocket: recibir mensajes en tiempo real
+  useEffect(() => {
+    const listener = (mensaje) => {
+      // Asegura que ambos sean string para comparar
+      if (chatSeleccionado && String(mensaje.idChat) === String(chatSeleccionado._id)) {
+        setMensajes(prevMensajes => [...prevMensajes, mensaje]);
+      }
+    };
+    socket.on('nuevoMensaje', listener);
+
+    return () => {
+      socket.off('nuevoMensaje', listener);
+    };
+  }, [chatSeleccionado]);
+
+  // Scroll automático al recibir mensajes nuevos
+  useEffect(() => {
+    if (flatListRef.current && mensajes.length > 0) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [mensajes]);
+
+  // Desconectar socket al desmontar componente
+  useEffect(() => {
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // Pantalla de chat seleccionado
   if (chatSeleccionado) {
-    // Pantalla de chat
     return (
       <SafeAreaView style={styles.container}>
         <MenuVigilante navigation={navigation} idVigilante={idVigilante} titulo="Chat" />
-        <View style={styles.content}>
-          <Text style={styles.screenTitle}>
-            {chatSeleccionado.tipo === 'general'
-              ? 'Chat General'
-              : chatSeleccionado.tipo === 'edificio'
-              ? `Chat Edificio: ${chatSeleccionado.nombreEdificio}`
-              : `Chat Privado (${obtenerNombresUsuarios(chatSeleccionado.usuarios.filter(u => u !== idVigilante))})`}
-          </Text>
-          <FlatList
-            data={mensajes}
-            keyExtractor={item => item._id}
-            renderItem={({ item }) => (
-              <View style={[
-                styles.mensaje,
-                item.idUsuario === idVigilante ? styles.mensajePropio : styles.mensajeOtro
-              ]}>
-                <Text style={styles.mensajeAutor}>
-                  {item.nombreUsuario || obtenerNombresUsuarios([item.idUsuario])}
-                </Text>
-                <Text>{item.contenido}</Text>
-                <Text style={styles.mensajeFecha}>
-                  {new Date(item.fechaEnvio).toLocaleString()}
-                </Text>
-              </View>
-            )}
-            style={{ flex: 1, width: '100%' }}
-          />
-          <KeyboardAvoidingView behavior="padding" style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={nuevoMensaje}
-              onChangeText={setNuevoMensaje}
-              placeholder="Escribe un mensaje..."
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={-10}
+        >
+          <View style={styles.content}>
+            <Text style={styles.screenTitle}>
+              {chatSeleccionado.tipo === 'general'
+                ? 'Chat General'
+                : chatSeleccionado.tipo === 'edificio'
+                ? `Chat Edificio: ${chatSeleccionado.nombreEdificio}`
+                : `Chat Privado (${obtenerNombresUsuarios(chatSeleccionado.usuarios.filter(u => u !== idVigilante))})`}
+            </Text>
+            <FlatList
+              ref={flatListRef}
+              data={mensajes}
+              extraData={mensajes}
+              keyExtractor={item => item._id}
+              renderItem={({ item }) => (
+                <View style={[
+                  styles.mensaje,
+                  item.idUsuario === idVigilante ? styles.mensajePropio : styles.mensajeOtro
+                ]}>
+                  <Text style={styles.mensajeAutor}>
+                    {item.nombreUsuario || obtenerNombresUsuarios([item.idUsuario])}
+                  </Text>
+                  <Text>{item.contenido}</Text>
+                  <Text style={styles.mensajeFecha}>
+                    {new Date(item.fechaEnvio).toLocaleString()}
+                  </Text>
+                </View>
+              )}
+              style={{ flex: 1, width: '100%' }}
             />
-            <Button title="Enviar" onPress={enviarMensaje} />
-          </KeyboardAvoidingView>
-          <Button title="Volver a chats" onPress={() => setChatSeleccionado(null)} />
-        </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.input, { minHeight: 40, maxHeight: 120 }]}
+                value={nuevoMensaje}
+                onChangeText={setNuevoMensaje}
+                placeholder="Escribe un mensaje..."
+                multiline
+                numberOfLines={1}
+                textAlignVertical="top"
+              />
+              <Button title="Enviar" onPress={enviarMensaje} />
+            </View>
+            <Button title="Volver a chats" onPress={() => setChatSeleccionado(null)} />
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -147,8 +186,26 @@ const styles = StyleSheet.create({
   mensajeOtro: { backgroundColor: '#f0f0f0', alignSelf: 'flex-start' },
   mensajeAutor: { fontWeight: 'bold', marginBottom: 2 },
   mensajeFecha: { fontSize: 10, color: '#888', marginTop: 2 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 8, marginRight: 8 },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: 10,
+    paddingBottom: 10,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    backgroundColor: '#fff',
+    fontSize: 16,
+    minHeight: 40,
+    maxHeight: 120,
+  },
+  inputAvoiding: { width: '100%' },
 });
 
 export default Chats;

@@ -86,14 +86,41 @@ const ModuloPagos = ({ navigation, route }) => {
     }
   };
 
+  //calcular la fecha de la vigencia
+  const calcularVigencia = (tipoPago) => {
+    const hoy = new Date();
+    let vigencia = new Date(hoy);
+    if (tipoPago === 'Semanal') {
+      vigencia.setDate(hoy.getDate() + 7);
+    } else if (tipoPago === 'Mensual') {
+      vigencia.setMonth(hoy.getMonth() + 1);
+    } else if (tipoPago === 'Anual') {
+      vigencia.setFullYear(hoy.getFullYear() + 1);
+    }
+    return vigencia.toISOString().split('T')[0]; // Solo fecha YYYY-MM-DD
+  };
+
   // Obtener edificios y departamentos únicos para los filtros
   const edificios = [...new Set(pagos.map(p => p.edificio))];
   const departamentos = edificioFiltro
     ? [...new Set(pagos.filter(p => p.edificio === edificioFiltro).map(p => p.departamento))]
     : [...new Set(pagos.map(p => p.departamento))];
 
+  // Agrupar pagos por usuario, departamento y edificio, y quedarte solo con el más reciente (mayor vigencia)
+  const pagosUnicos = Object.values(
+    pagos.reduce((acc, pago) => {
+      // Puedes usar una clave única combinando los campos relevantes
+      const clave = `${pago.idUsuario}_${pago.departamento}_${pago.edificio}`;
+      // Si no existe o la vigencia es mayor, actualiza
+      if (!acc[clave] || new Date(pago.vigencia) > new Date(acc[clave].vigencia)) {
+        acc[clave] = pago;
+      }
+      return acc;
+    }, {})
+  );
+
   // Filtrar pagos según los filtros seleccionados
-  const pagosFiltrados = pagos.filter(p =>
+  const pagosFiltrados = pagosUnicos.filter(p =>
     (edificioFiltro ? p.edificio === edificioFiltro : true) &&
     (departamentoFiltro ? p.departamento === departamentoFiltro : true)
   );
@@ -159,8 +186,9 @@ const ModuloPagos = ({ navigation, route }) => {
         <DataTable style={styles.table}>
           <DataTable.Header>
             <DataTable.Title>Edificio</DataTable.Title>
-            <DataTable.Title>Departamento</DataTable.Title>
+            <DataTable.Title>Dep.</DataTable.Title>
             <DataTable.Title>Estatus</DataTable.Title>
+            <DataTable.Title>Vigencia</DataTable.Title>
           </DataTable.Header>
           {pagosFiltrados.map((pago, idx) => (
             <DataTable.Row key={idx}>
@@ -168,12 +196,13 @@ const ModuloPagos = ({ navigation, route }) => {
               <DataTable.Cell>{pago.departamento}</DataTable.Cell>
               <DataTable.Cell>
                 <Text style={{
-                  color: pago.estatus === 'vigente' ? 'green' : 'red',
+                  color: new Date() <= new Date(pago.vigencia) ? 'green' : 'red',
                   fontWeight: 'bold'
                 }}>
-                  {pago.estatus === 'vigente' ? 'Vigente' : 'No pagado'}
+                  {new Date() <= new Date(pago.vigencia) ? 'Vigente' : 'No pagado'}
                 </Text>
               </DataTable.Cell>
+              <DataTable.Cell>{new Date(pago.vigencia).toLocaleDateString()}</DataTable.Cell>
             </DataTable.Row>
           ))}
         </DataTable>
@@ -183,7 +212,7 @@ const ModuloPagos = ({ navigation, route }) => {
               <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Agregar pago manual</Text>
               <Picker
                 selectedValue={datosPago.idUsuario}
-                style={styles.input}
+                style={styles.pickerAgregar}
                 onValueChange={usuarioId => {
                   const usuario = usuarios.find(u => u._id === usuarioId);
                   setDatosPago({
@@ -199,44 +228,74 @@ const ModuloPagos = ({ navigation, route }) => {
                 {usuarios.map(u => (
                   <Picker.Item
                     key={u._id}
-                    label={`${u.NombreCompleto} - ${u.Edificio} - Depto ${u.Departamento}`}
+                    label={u.NombreCompleto}
                     value={u._id}
                   />
                 ))}
               </Picker>
 
+              <TextInput
+                label="Edificio"
+                mode='outlined'
+                value={datosPago.edificio}
+                style={styles.input}
+                editable={false}
+              />
+              <TextInput
+                label="Departamento"
+                mode='outlined'
+                value={datosPago.departamento}
+                style={styles.input}
+                editable={false}
+              />
+
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, width: '80%' }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 17, minWidth: 110 }}>Tipo de pago:</Text>
                 <RadioButton.Group
-                  onValueChange={value => setDatosPago({ ...datosPago, tipoPago: value })}
+                  onValueChange={value => {
+                    setDatosPago({
+                      ...datosPago,
+                      tipoPago: value,
+                      vigencia: calcularVigencia(value)
+                    });
+                  }}
                   value={datosPago.tipoPago}
                 >
-                  <View style={{ alignItems: 'center' }}>
-                    <RadioButton.Item color='#007bffff' label="Semanal" value="Semanal" />
-                    <RadioButton.Item color='#007bffff' label="Mensual" value="Mensual" />
-                    <RadioButton.Item color='#007bffff' label="Anual" value="Anual" />
+                  <View style={{ alignItems: 'flex-start', width: '100%'}}>
+                    <RadioButton.Item position='leading' color='#007bffff' label="Semanal" value="Semanal" />
+                    <RadioButton.Item position='leading' color='#007bffff' label="Mensual" value="Mensual" />
+                    <RadioButton.Item position='leading' color='#007bffff' label="Anual" value="Anual" />
                   </View>
                 </RadioButton.Group>
               </View>
-              
-              <TextInput
-                label="Método de pago"
-                value={datosPago.metodoPago}
-                onChangeText={v => setDatosPago({ ...datosPago, metodoPago: v })}
-                style={styles.input}
-              />
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, width: '90%' }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 17, minWidth: 110 }}>Método de pago:</Text>
+                <RadioButton.Group
+                  onValueChange={value => setDatosPago({ ...datosPago, metodoPago: value })}
+                  value={datosPago.metodoPago}
+                >
+                  <View style={{  alignItems: 'flex-start', width: '100%'  }}>
+                    <RadioButton.Item position='leading' color='#007bffff' label="Manual" value="Manual" />
+                    <RadioButton.Item position='leading' color='#007bffff' label="Transferencia" value="Transferencia" />
+                  </View>
+                </RadioButton.Group>
+              </View>
+
               <TextInput
                 label="Monto"
+                mode='outlined'
                 value={datosPago.monto}
                 onChangeText={v => setDatosPago({ ...datosPago, monto: v })}
                 keyboardType="numeric"
                 style={styles.input}
               />
               <TextInput
-                label="Vigencia (YYYY-MM-DD)"
+                label="Vigencia"
+                mode='outlined'
                 value={datosPago.vigencia}
-                onChangeText={v => setDatosPago({ ...datosPago, vigencia: v })}
                 style={styles.input}
+                editable={false}
               />
               <View style={{ flexDirection: 'row', marginTop: 10 }}>
                 <Button
@@ -256,7 +315,7 @@ const ModuloPagos = ({ navigation, route }) => {
                       ...datosPago,
                       monto: parseFloat(datosPago.monto),
                       fechaPago: new Date().toISOString(), // Fecha actual
-                      vigencia: new Date(datosPago.vigencia).toISOString(),
+                      vigencia: calcularVigencia(datosPago.tipoPago),
                       procesadoPor: idAdmin,
                       referenciaStripe: '' 
                     });
@@ -314,8 +373,16 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   picker: {
-    height: 50,
-    width: '100%',
+    width: 150,
+    height: 55,
+    borderRadius: 10,
+    marginBottom: 5,
+  },
+  pickerAgregar: {
+    width: 290,
+    height: 55,
+    borderRadius: 10,
+    marginBottom: 5,
   },
   modalView: {
     marginHorizontal: 20,
@@ -333,17 +400,11 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     minWidth: 280,
   },
-  input: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 10,
-    fontSize: 16,
-    backgroundColor: '#f7fafd',
-    width: '100%',
-    minHeight: 40,
-    maxHeight: 100,
+  input: { 
+    width: 290, 
+    height: 36, 
+    borderRadius: 10, 
+    marginBottom: 5 
   },
   fab: {
     position: 'absolute',
