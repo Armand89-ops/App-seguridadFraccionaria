@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "143230664499",
+    "project_id": "app-seguridad-fraccionar-f042b",
+    "storage_bucket": "app-seguridad-fraccionar-f042b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:143230664499:android:eba589bf6685e976b10846",
+        "android_client_info": {
+          "package_name": "com.armand89.appseguridadfraccionaria"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeH0ktJD76FKInAlTu2swNJ3AdsD0Cle0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
