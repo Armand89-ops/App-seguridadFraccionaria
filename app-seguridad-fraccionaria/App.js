@@ -4,8 +4,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack'; 
 import { Provider as PaperProvider, TextInput, Button } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 
 import inicioUsuarioAdmin from './usuarioAdministrador/InicioAdmin';
 import inicioUsuarioResidente from './usuarioResidente/InicioResidente';
@@ -55,6 +55,32 @@ const funcionLogin = async() => {
       const data = await response.json();
       
       if (data.success) {
+        // Obtén el token Expo
+        let expoPushToken = null;
+        try {
+          const { status: existingStatus } = await Notifications.getPermissionsAsync();
+          let finalStatus = existingStatus;
+          if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+          }
+          if (finalStatus === 'granted') {
+            expoPushToken = (await Notifications.getExpoPushTokenAsync()).data;
+            // Registra el token en el backend junto con el id del usuario
+            await fetch('http://192.168.0.103:3000/registerToken', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                token: expoPushToken,
+                idUsuario: data.id, // <-- usa el id que recibes del backend
+                plataforma: Platform.OS
+              }),
+            });
+          }
+        } catch (err) {
+          console.warn('No se pudo registrar el token push:', err);
+        }
+
         // Navegación condicional según el tipo de usuario
         switch (data.tipoUsuario) {
           case 'Administrador':
@@ -132,23 +158,35 @@ export default function App() {
           finalStatus = status;
         }
         if (finalStatus !== 'granted') {
-          alert('¡No se pudo obtener el token para notificaciones push!');
+          alert('No se pudo obtener el token para notificaciones push');
           return;
         }
         token = (await Notifications.getExpoPushTokenAsync()).data;
         console.log('Expo Push Token:', token);
-        // Guarda este token en tu backend si quieres enviar notificaciones desde el servidor
-      } else {
-        alert('Debes usar un dispositivo físico para las notificaciones push');
+
+        // ENVÍA EL TOKEN AL BACKEND
+        try {
+  await fetch('http://192.168.0.103:3000/registerToken', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      token: token, // <-- usa 'token' aquí
+      idUsuario: null, // <-- no tienes el id aquí, pon null o elimina este campo
+      plataforma: Platform.OS
+    }),
+  });
+} catch (err) {
+  console.warn('No se pudo enviar el token al backend', err);
+}
       }
     }
     registerForPushNotificationsAsync();
+  }, []);
 
-    // Listener para recibir notificaciones en primer plano
+  useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notificación recibida:', notification);
     });
-
     return () => subscription.remove();
   }, []);
 
@@ -287,3 +325,4 @@ const styles = StyleSheet.create({
     marginBottom: 16,                                     
   },
 });
+

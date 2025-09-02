@@ -11,7 +11,7 @@ const InicioAdmin = ({ navigation, route }) => {
     contenido: '',
     idAdmin: idAdmin,
   });
-
+ 
   const FuncionAgregarAnuncio = async () => {
         if (!DatosAnuncio.contenido) {
           Alert.alert('Error', 'Debes ingresar el contenido del anuncio');
@@ -23,7 +23,7 @@ const InicioAdmin = ({ navigation, route }) => {
           titulo: 'Noticia urgente',
           tipo: 'General',
           idAdmin: idAdmin,
-        };
+        }; 
         try {
           const res = await fetch('http://192.168.0.103:3000/agregarAnuncio', {
             method: 'POST',
@@ -38,6 +38,22 @@ const InicioAdmin = ({ navigation, route }) => {
             setModalAgregarVisible(false);
             setDatosAnuncio({ contenido: '' });
             Alert.alert('Éxito', 'El anuncio fue agregado correctamente');
+
+            // --- enviar notificación a tokens registrados ---
+            try {
+              await fetch('http://192.168.0.103:3000/enviarNotificacionExpo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: datosEnviar.titulo,
+                  body: datosEnviar.contenido,
+                  data: { tipo: 'anuncio', idAdmin: idAdmin, idAnuncio: data.insertedId || null }
+                })
+              });
+            } catch (err) {
+              console.warn('No se pudo enviar notificación:', err);
+            }
+            // --- fin envío ---
           } else {
             console.log('Error backend:', data);
             Alert.alert('Error', 'No se pudo agregar el anuncio');

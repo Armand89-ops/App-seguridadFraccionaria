@@ -89,7 +89,7 @@ android {
 
     namespace 'com.armand89.appseguridadfraccionaria'
     defaultConfig {
-        applicationId 'com.armand89.appseguridadfraccionaria'
+        applicationId "com.armand89.appseguridadfraccionaria"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -148,7 +148,8 @@ android {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:34.1.0"))
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-analytics'
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
@@ -175,6 +176,14 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // Firebase BoM (gestiona versiones compatibles)
+    implementation platform('com.google.firebase:firebase-bom:34.2.0')
+
+    // SDKs de Firebase que necesites (sin versión cuando usas BoM)
+    implementation 'com.google.firebase:firebase-messaging'
+    // implementation 'com.google.firebase:firebase-analytics' // ejemplo
 }
 
+// Agregar al final del archivo para que google-services procese google-services.json
 apply plugin: 'com.google.gms.google-services'
